@@ -41,8 +41,12 @@ public class ServiceTaskJavaDelegateActivityBehavior extends TaskActivityBehavio
   }
 
   public void execute(DelegateExecution execution) {
-    Context.getProcessEngineConfiguration().getDelegateInterceptor().handleInvocation(new JavaDelegateInvocation(javaDelegate, execution));
-    leave(execution);
+      try {
+          Context.getProcessEngineConfiguration().getDelegateInterceptor().handleInvocation(new JavaDelegateInvocation(javaDelegate, execution));
+      } catch (Throwable e){
+         return;
+      }
+      leave(execution);
   }
 
   public void notify(DelegateExecution execution) {

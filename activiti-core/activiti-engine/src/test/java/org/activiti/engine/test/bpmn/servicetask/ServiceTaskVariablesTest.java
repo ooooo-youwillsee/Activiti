@@ -20,6 +20,8 @@ package org.activiti.engine.test.bpmn.servicetask;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.Serializable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.activiti.engine.delegate.DelegateExecution;
 import org.activiti.engine.delegate.JavaDelegate;
@@ -43,10 +45,16 @@ public class ServiceTaskVariablesTest extends PluggableActivitiTestCase {
 
   public static class Delegate1 implements JavaDelegate {
 
+      private static AtomicInteger count = new AtomicInteger(0);
+
     public void execute(DelegateExecution execution) {
       Variable v = new Variable();
       v.value = "delegate1";
+        System.out.println("---delegate1--- cnt: " + count.getAndIncrement());
       execution.setVariable("variable", v);
+        if (count.get() != 5) {
+            throw new RuntimeException("service1");
+        }
     }
 
   }
@@ -60,6 +68,7 @@ public class ServiceTaskVariablesTest extends PluggableActivitiTestCase {
         isOkInDelegate2 = (v.value != null && v.value.equals("delegate1"));
       }
       v.value = "delegate2";
+        System.out.println("---delegate2---");
       execution.setVariable("variable", v);
     }
 
@@ -73,6 +82,7 @@ public class ServiceTaskVariablesTest extends PluggableActivitiTestCase {
         // we expect this to be 'true' as well
         isOkInDelegate3 = (v.value != null && v.value.equals("delegate2"));
       }
+      System.out.println("---delegate3---");
     }
 
   }
@@ -85,16 +95,22 @@ public class ServiceTaskVariablesTest extends PluggableActivitiTestCase {
 
     runtimeService.startProcessInstanceByKey("process");
 
-    Job job = managementService.createJobQuery().singleResult();
-    assertThat(job).isNotNull();
-    managementService.executeJob(job.getId());
 
-    job = managementService.createJobQuery().singleResult();
-    assertThat(job).isNotNull();
-    managementService.executeJob(job.getId());
+      try {
+          new CountDownLatch(1).await();
+      } catch (InterruptedException e) {
 
-    assertThat(isOkInDelegate2).isTrue();
-    assertThat(isOkInDelegate3).isTrue();
+      }
+//    Job job = managementService.createJobQuery().singleResult();
+//    assertThat(job).isNotNull();
+//    managementService.executeJob(job.getId());
+
+//    job = managementService.createJobQuery().singleResult();
+//    assertThat(job).isNotNull();
+//    managementService.executeJob(job.getId());
+//
+//    assertThat(isOkInDelegate2).isTrue();
+//    assertThat(isOkInDelegate3).isTrue();
   }
 
   @Deployment
