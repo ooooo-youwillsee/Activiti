@@ -89,12 +89,14 @@ public class BoundaryEventActivityBehavior extends FlowNodeActivityBehavior {
       throw new ActivitiException("Programmatic error: no parent scope execution found for boundary event");
     }
 
-    deleteChildExecutions(attachedRefScopeExecution, executionEntity, commandContext);
-
+    deleteChildExecutions(attachedRefScopeExecution, attachedRefScopeExecution, commandContext);
     // set new parent for boundary event execution
-    executionEntity.setParent(parentScopeExecution);
+    //executionEntity.setParent(parentScopeExecution);
 
-    Context.getAgenda().planTakeOutgoingSequenceFlowsOperation(executionEntity, true);
+    ExecutionEntity e = executionEntityManager.createChildExecution(parentScopeExecution);
+    e.setCurrentFlowElement(executionEntity.getCurrentFlowElement());
+
+    Context.getAgenda().planTakeOutgoingSequenceFlowsOperation(e, true);
   }
 
   protected void executeNonInterruptingBehavior(ExecutionEntity executionEntity, CommandContext commandContext) {
